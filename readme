@@ -17,12 +17,15 @@ Currently renders basic spheres with a minimal scene setup. Future work will inc
 
 ## 🚀 Getting Started
 
-1. Clone the repository:
+1. **Clone the repository:**
    ```bash
    git clone https://github.com/Amr-Nashaatx/graphics-programming.git
    cd graphics-programming
    ```
-2. Open index.html in your browser.
+2. **Open index.html in your browser**.
    (You can also use a local server such as VS Code’s Live Server extension to avoid CORS issues.)
 
-3. The rendered scene will appear on the canvas.
+3. **View the result**.
+   The rendered scene will appear on the canvas.
+
+Work in progress — built for learning, one pixel at a time.
