@@ -1,0 +1,28 @@
+# Graphics Programming
+
+A personal journey into computer graphics — building everything from scratch to understand how things truly work under the hood.
+
+This project starts with a simple **ray tracer** written in JavaScript, following the concepts from the book _“Computer Graphics from Scratch”_ by Gabriel Gambetta. The goal is to explore the core principles of rendering, geometry, and light step by step without relying on external graphics libraries.
+
+Currently renders basic spheres with a minimal scene setup. Future work will include lighting, shading, reflections, and more advanced rendering techniques.
+
+---
+
+## 🧠 Tech Stack
+
+- JavaScript (ES6 Modules)
+- HTML5 Canvas
+
+---
+
+## 🚀 Getting Started
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Amr-Nashaatx/graphics-programming.git
+   cd graphics-programming
+   ```
+2. Open index.html in your browser.
+   (You can also use a local server such as VS Code’s Live Server extension to avoid CORS issues.)
+
+3. The rendered scene will appear on the canvas.
