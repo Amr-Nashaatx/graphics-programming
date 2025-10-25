@@ -33,7 +33,18 @@ export class Vector {
   subtract(p) {
     return new Vector(this.x - p.x, this.y - p.y, this.z - p.z);
   }
-
+  /**
+   *
+   * @param {number} multiplier - scale value
+   * @return {Vector}
+   */
+  scale(multiplier) {
+    return new Vector(
+      this.x * multiplier,
+      this.y * multiplier,
+      this.z * multiplier
+    );
+  }
   /**
    *
    * @param {Vector} v
@@ -41,6 +52,15 @@ export class Vector {
    */
   dotProduct(v) {
     return this.x * v.x + this.y * v.y + this.z * v.z;
+  }
+  magnitude() {
+    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+  }
+
+  normalize() {
+    const mag = this.magnitude();
+    if (mag < 1e-8) return new Vector(0, 0, 0);
+    return this.scale(1 / mag);
   }
 }
 /**

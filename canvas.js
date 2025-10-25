@@ -23,6 +23,18 @@ export class Color {
     /** @type {number} */
     this.b = b;
   }
+
+  /**
+   *
+   * @param {s} s - multiplier lighten color
+   */
+  scale(s) {
+    return new Color(
+      Math.min(255, this.r * s),
+      Math.min(255, this.g * s),
+      Math.min(255, this.b * s)
+    );
+  }
 }
 
 export class Canvas {

@@ -1,5 +1,6 @@
 import { Canvas, Color } from "./canvas.js";
 import { BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants.js";
+import { DirectionalLight, Light, PointLight } from "./light.js";
 import { IntersectRaySphere, Vector } from "./math.js";
 
 /**
@@ -14,6 +15,10 @@ export class Scene {
      *   @type {object[]}
      */
     this.objects = [];
+    /**
+     *   @type {Light[]}
+     */
+    this.lights = [];
     /**
      *   @type {Canvas}
      */
@@ -32,7 +37,13 @@ export class Scene {
   addObject(obj) {
     this.objects.push(obj);
   }
-
+  /**
+   * Adds Light to the scene
+   * @param {Light} light
+   */
+  addLight(light) {
+    this.lights.push(light);
+  }
   /**
    *  Draw an image of the current scene
    *  @return {void}
@@ -42,7 +53,7 @@ export class Scene {
     for (let x = -CANVAS_WIDTH / 2; x < CANVAS_WIDTH / 2; x++) {
       for (let y = -CANVAS_HEIGHT / 2; y < CANVAS_HEIGHT / 2; y++) {
         const currentPixel = new Vector(x, y, 0);
-        const D = this.canvas.canvasToViewPort(currentPixel); // Ray direction vector
+        const D = this.canvas.canvasToViewPort(currentPixel).normalize(); // Ray direction vector
         const color = this.traceRay(D);
         this.canvas.putPixel(
           this.canvas.convertToScreenCoordinates(currentPixel),
@@ -77,6 +88,39 @@ export class Scene {
     }
 
     if (!closestSphere) return BACKGROUND_COLOR;
-    return closestSphere.color;
+    const P = this.O.add(D.scale(closestT)); //compute the point on the sphere
+    let N = P.subtract(closestSphere.center); // compute the normal
+    N = N.normalize();
+
+    const intensity = this.computeLighting(P, N);
+    return closestSphere.color.scale(intensity);
+  }
+  /**
+   *
+   * @param {Vector} P - Point to compute the light at
+   * @param {Vector} N - Normal of surface at that point
+   */
+  computeLighting(P, N) {
+    let i = 0;
+    let L;
+    for (let light of this.lights) {
+      if (light.constructor === Light) {
+        //ambient light
+        i += light.intensity;
+      } else {
+        if (light.constructor === PointLight) {
+          L = light.position.subtract(P); // ray direction
+        } else if (light.constructor === DirectionalLight) {
+          L = light.direction;
+        }
+
+        const nDotL = N.dotProduct(L);
+        if (nDotL > 0) {
+          i += light.intensity * (nDotL / (N.magnitude() * L.magnitude()));
+        }
+      }
+    }
+
+    return i;
   }
 }
