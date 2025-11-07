@@ -77,6 +77,16 @@ export class Sphere {
     this.center = center;
     this.radius = radius;
     this.color = color;
+    this.specular = -1;
+  }
+  /**
+   *
+   * @param {s} specular - The specular exponent
+   * @returns {Sphere}
+   */
+  addSpecularity(specular) {
+    this.specular = specular;
+    return this;
   }
 }
 
@@ -101,11 +111,7 @@ export function IntersectRaySphere(O, D, sphere) {
   const discriminant = Math.pow(b, 2) - 4 * a * c;
 
   // complex roots case --> no intersection
-  if (discriminant < 0)
-    return [
-      new Vector(Infinity, Infinity, Infinity),
-      new Vector(Infinity, Infinity, Infinity),
-    ];
+  if (discriminant < 0) return [Infinity, Infinity];
 
   const root1 = ((-b + Math.sqrt(discriminant)) / 2) * a;
   const root2 = ((-b - Math.sqrt(discriminant)) / 2) * a;

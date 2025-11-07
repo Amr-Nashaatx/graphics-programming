@@ -89,18 +89,25 @@ export class Scene {
 
     if (!closestSphere) return BACKGROUND_COLOR;
     const P = this.O.add(D.scale(closestT)); //compute the point on the sphere
-    let N = P.subtract(closestSphere.center); // compute the normal
-    N = N.normalize();
+    let N = P.subtract(closestSphere.center).normalize(); // compute the normal
 
-    const intensity = this.computeLighting(P, N);
+    // V  is a vector that points from the object to the camera(the viewer).
+    // but D (ray vector) points from the camera to the object
+    // hence in this case V = - D
+
+    let V = D.scale(-1);
+
+    const intensity = this.computeLighting(P, N, V, closestSphere.specular);
     return closestSphere.color.scale(intensity);
   }
   /**
    *
    * @param {Vector} P - Point to compute the light at
    * @param {Vector} N - Normal of surface at that point
+   * @param {Vector} V - Viewer vector
+   * @param {Vector} s - Specular exponent
    */
-  computeLighting(P, N) {
+  computeLighting(P, N, V, s) {
     let i = 0;
     let L;
     for (let light of this.lights) {
@@ -113,10 +120,20 @@ export class Scene {
         } else if (light.constructor === DirectionalLight) {
           L = light.direction;
         }
-
+        // diffuse
         const nDotL = N.dotProduct(L);
         if (nDotL > 0) {
           i += light.intensity * (nDotL / (N.magnitude() * L.magnitude()));
+        }
+        // specular
+        if (!(s === -1)) {
+          const R = N.scale(2 * N.dotProduct(L)).subtract(L); // R reflected ray vector
+          const RdotV = R.dotProduct(V);
+          if (RdotV > 0) {
+            i +=
+              light.intensity *
+              Math.pow(RdotV / (R.magnitude() * V.magnitude()), s);
+          }
         }
       }
     }
