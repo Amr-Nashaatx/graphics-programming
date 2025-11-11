@@ -35,6 +35,13 @@ export class Color {
       Math.min(255, this.b * s)
     );
   }
+  add(c) {
+    return new Color(
+      Math.min(255, this.r + c.r),
+      Math.min(255, this.g + c.g),
+      Math.min(255, this.b + c.b)
+    );
+  }
 }
 
 export class Canvas {

@@ -1,7 +1,7 @@
 import { Canvas, Color } from "./canvas.js";
 import { BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants.js";
 import { DirectionalLight, Light, PointLight } from "./light.js";
-import { IntersectRaySphere, Vector } from "./math.js";
+import { IntersectRaySphere, Vector, reflectRay } from "./math.js";
 
 /**
  * Represents a 3D scene containing objects, lights, and a camera.
@@ -53,8 +53,8 @@ export class Scene {
     for (let x = -CANVAS_WIDTH / 2; x < CANVAS_WIDTH / 2; x++) {
       for (let y = -CANVAS_HEIGHT / 2; y < CANVAS_HEIGHT / 2; y++) {
         const currentPixel = new Vector(x, y, 0);
-        const D = this.canvas.canvasToViewPort(currentPixel).normalize(); // Ray direction vector
-        const color = this.traceRay(D);
+        const D = this.canvas.canvasToViewPort(currentPixel); // Ray direction vector
+        const color = this.traceRay(this.O, D); // Trace from camera position (this.O) in the D direction
         this.canvas.putPixel(
           this.canvas.convertToScreenCoordinates(currentPixel),
           color
@@ -70,16 +70,16 @@ export class Scene {
    * @param {number} tMax - Maximum point in the ray after which we stop capturing any intersections
    * @returns {Color}
    */
-  traceRay(D, tMin = 1, tMax = Infinity) {
+  traceRay(S, D, tMin = 1, tMax = Infinity, recursionDepth = 3) {
     const [closestSphere, closestT] = this.closestIntersection(
-      this.O,
+      S,
       D,
       tMin,
       tMax
     );
 
     if (!closestSphere) return BACKGROUND_COLOR;
-    const P = this.O.add(D.scale(closestT)); //compute the point on the sphere
+    const P = S.add(D.scale(closestT)); //compute the point on the sphere
     let N = P.subtract(closestSphere.center).normalize(); // compute the normal
 
     // V  is a vector that points from the object to the camera(the viewer).
@@ -89,7 +89,28 @@ export class Scene {
     let V = D.scale(-1);
 
     const intensity = this.computeLighting(P, N, V, closestSphere.specular);
-    return closestSphere.color.scale(intensity);
+    const localColor = closestSphere.color.scale(intensity);
+
+    // If we hit the recursion limit or the object is not reflective, we're done
+    const r = closestSphere.reflective;
+    if (recursionDepth <= 0 || r <= 0) {
+      return localColor;
+    }
+
+    // Compute the reflected color
+    // The direction of the reflected ray is the direction of the incoming ray bouncing off P.
+    //  in traceRay() we have D , the direction of the incoming ray towards P, we want the reflected ray pointing out of the surface.
+    // so we first flip the direction of D (-D) which means the ray outgoing from P then we reflect it with respect to N
+
+    const R = reflectRay(D.scale(-1), N);
+    const reflectedColor = this.traceRay(
+      P,
+      R,
+      0.001,
+      Infinity,
+      recursionDepth - 1
+    );
+    return localColor.scale(1 - r).add(reflectedColor.scale(r));
   }
   /**
    * computes the intersection of the ray with every sphere and returns the color of the sphere at the nearest intersection
@@ -105,11 +126,12 @@ export class Scene {
     let closestSphere = null;
     for (let sphere of this.objects) {
       const [t1, t2] = IntersectRaySphere(P, D, sphere);
-      if (t1 >= tMin && t1 <= tMax && t1 < closestT) {
+      const isTinRange = (t) => t >= tMin && t <= tMax;
+      if (isTinRange(t1) && t1 < closestT) {
         closestT = t1;
         closestSphere = sphere;
       }
-      if (t2 >= tMin && t2 <= tMax && t2 < closestT) {
+      if (isTinRange(t2) && t2 < closestT) {
         closestT = t2;
         closestSphere = sphere;
       }
@@ -157,7 +179,7 @@ export class Scene {
         }
         // specular
         if (!(s === -1)) {
-          const R = N.scale(2 * N.dotProduct(L)).subtract(L); // R reflected ray vector
+          const R = reflectRay(L, N); // reflected ray
           const RdotV = R.dotProduct(V);
           if (RdotV > 0) {
             i +=

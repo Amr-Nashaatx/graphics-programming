@@ -77,6 +77,7 @@ export class Sphere {
     this.radius = radius;
     this.color = color;
     this.specular = -1;
+    this.reflective = 0;
   }
   /**
    *
@@ -85,6 +86,11 @@ export class Sphere {
    */
   addSpecularity(specular) {
     this.specular = specular;
+    return this;
+  }
+
+  addReflectiveness(reflective) {
+    this.reflective = reflective;
     return this;
   }
 }
@@ -116,4 +122,14 @@ export function IntersectRaySphere(O, D, sphere) {
   const root2 = (-b - sqrtDisc) / (2 * a);
 
   return [root1, root2];
+}
+
+/**
+ *
+ * @param {Vector} D - Incident ray
+ * @param {Vector} N - Surface normal at that point
+ * @returns {Vector} - Reflected ray around the normal
+ */
+export function reflectRay(D, N) {
+  return N.scale(2 * N.dotProduct(D)).subtract(D);
 }
