@@ -59,7 +59,6 @@ export class Vector {
 
   normalize() {
     const mag = this.magnitude();
-    if (mag < 1e-8) return new Vector(0, 0, 0);
     return this.scale(1 / mag);
   }
 }
@@ -92,7 +91,7 @@ export class Sphere {
 
 /**
  *
- * @param {Vector} O Camera position vector
+ * @param {Vector} O Starting point of ray
  * @param {Vector} D Ray direction vector
  * @param {Sphere} sphere Sphere with which the ray intersects
  * @return {Vector[]} Two points of intersection
@@ -106,15 +105,15 @@ export function IntersectRaySphere(O, D, sphere) {
 
   const a = D.dotProduct(D);
   const b = 2 * CO.dotProduct(D);
-  const c = CO.dotProduct(CO) - Math.pow(r, 2);
+  const c = CO.dotProduct(CO) - r * r;
 
-  const discriminant = Math.pow(b, 2) - 4 * a * c;
+  const discriminant = b * b - 4 * a * c;
 
-  // complex roots case --> no intersection
   if (discriminant < 0) return [Infinity, Infinity];
 
-  const root1 = ((-b + Math.sqrt(discriminant)) / 2) * a;
-  const root2 = ((-b - Math.sqrt(discriminant)) / 2) * a;
+  const sqrtDisc = Math.sqrt(discriminant);
+  const root1 = (-b + sqrtDisc) / (2 * a);
+  const root2 = (-b - sqrtDisc) / (2 * a);
 
   return [root1, root2];
 }
