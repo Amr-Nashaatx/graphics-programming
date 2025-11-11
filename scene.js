@@ -64,28 +64,19 @@ export class Scene {
     this.canvas.updateCanvas();
   }
   /**
-   * computes the intersection of the ray with every sphere and returns the color of the sphere at the nearest intersection
-   *  inside the requested range of t
+   *  Trace a ray from camera through viewport and returns the color of the first object hit. lighting calculations is included as well.
    * @param {Vector} D - Ray direction vector
    * @param {number} tMin - minimum point in the ray after which we start capturing colors the ray passes through
    * @param {number} tMax - Maximum point in the ray after which we stop capturing any intersections
    * @returns {Color}
    */
   traceRay(D, tMin = 1, tMax = Infinity) {
-    let closestT = Infinity;
-    let closestSphere = null;
-    let O = this.O;
-    for (let sphere of this.objects) {
-      const [t1, t2] = IntersectRaySphere(O, D, sphere);
-      if (t1 >= tMin && t1 <= tMax && t1 < closestT) {
-        closestT = t1;
-        closestSphere = sphere;
-      }
-      if (t2 >= tMin && t2 <= tMax && t2 < closestT) {
-        closestT = t2;
-        closestSphere = sphere;
-      }
-    }
+    const [closestSphere, closestT] = this.closestIntersection(
+      this.O,
+      D,
+      tMin,
+      tMax
+    );
 
     if (!closestSphere) return BACKGROUND_COLOR;
     const P = this.O.add(D.scale(closestT)); //compute the point on the sphere
@@ -99,6 +90,31 @@ export class Scene {
 
     const intensity = this.computeLighting(P, N, V, closestSphere.specular);
     return closestSphere.color.scale(intensity);
+  }
+  /**
+   * computes the intersection of the ray with every sphere and returns the color of the sphere at the nearest intersection
+   *  inside the requested range of t
+   * @param {Vector} P - Starting position of the ray
+   * @param {Vector} D - Ray direction vector
+   * @param {number} tMin - minimum point in the ray after which we start capturing colors the ray passes through
+   * @param {number} tMax - Maximum point in the ray after which we stop capturing any intersections
+   * @returns {[Sphere, number]}
+   */
+  closestIntersection(P, D, tMin = 1, tMax = Infinity) {
+    let closestT = Infinity;
+    let closestSphere = null;
+    for (let sphere of this.objects) {
+      const [t1, t2] = IntersectRaySphere(P, D, sphere);
+      if (t1 >= tMin && t1 <= tMax && t1 < closestT) {
+        closestT = t1;
+        closestSphere = sphere;
+      }
+      if (t2 >= tMin && t2 <= tMax && t2 < closestT) {
+        closestT = t2;
+        closestSphere = sphere;
+      }
+    }
+    return [closestSphere, closestT];
   }
   /**
    *
@@ -115,10 +131,24 @@ export class Scene {
         //ambient light
         i += light.intensity;
       } else {
+        let tMax = 0;
         if (light.constructor === PointLight) {
           L = light.position.subtract(P); // ray direction
+          tMax = 1;
         } else if (light.constructor === DirectionalLight) {
           L = light.direction;
+          tMax = Infinity;
+        }
+        // shadow check ---> Send ray from the point P in the direction of light L.
+        //  if the it hits an object it means this point is in shadow of that object hence we ignore lighting computation for that point
+        const [shadowObject, shadowT] = this.closestIntersection(
+          P,
+          L,
+          0.001,
+          tMax
+        );
+        if (shadowObject) {
+          continue;
         }
         // diffuse
         const nDotL = N.dotProduct(L);
