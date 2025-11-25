@@ -1,10 +1,10 @@
 import { Color } from "./canvas.js";
 /**
- * Represents a point or vector in 3D space.
+ * Represents or vector in 3D space.
  */
 export class Vector {
   /**
-   * Create a point.
+   * Create a vector.
    * @param {number} [x=0] - The X coordinate.
    * @param {number} [y=0] - The Y coordinate.
    * @param {number} [z=0] - The Z coordinate.
@@ -19,49 +19,82 @@ export class Vector {
   }
   /**
    *
-   * @param {Vector} p
+   * @param {Vector} v
    * @return {Vector}
    */
-  add(p) {
-    return new Vector(this.x + p.x, this.y + p.y, this.z + p.z);
+  add(v) {
+    return new Vector(this.x + v.x, this.y + v.y, this.z + v.z);
   }
   /**
    *
-   * @param {Vector} p
+   * @param {Vector} v
    * @return {Vector}
    */
-  subtract(p) {
-    return new Vector(this.x - p.x, this.y - p.y, this.z - p.z);
+  subtract(v) {
+    return new Vector(this.x - v.x, this.y - v.y, this.z - v.z);
   }
   /**
    *
-   * @param {number} multiplier - scale value
+   * @param {number} s
    * @return {Vector}
    */
-  scale(multiplier) {
-    return new Vector(
-      this.x * multiplier,
-      this.y * multiplier,
-      this.z * multiplier
-    );
+  scale(s) {
+    return new Vector(this.x * s, this.y * s, this.z * s);
   }
   /**
    *
    * @param {Vector} v
    * @return {number}
    */
-  dotProduct(v) {
+  dot(v) {
     return this.x * v.x + this.y * v.y + this.z * v.z;
   }
+  /**
+   *
+   * @param {Vector} v
+   * @return {Vector}
+   */
+  cross(v) {
+    return new Vector(
+      this.y * v.z - this.z * v.y,
+      this.z * v.x - this.x * v.z,
+      this.x * v.y - this.y * v.x
+    );
+  }
+  /**
+   *
+   * @return {number}
+   */
   magnitude() {
-    return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+    return Math.sqrt(this.dot(this));
   }
-
+  /**
+   *
+   * @return {Vector}
+   */
   normalize() {
-    const mag = this.magnitude();
-    return this.scale(1 / mag);
+    const m = this.magnitude();
+    return m === 0 ? new Vector(0, 0, 0) : this.scale(1 / m);
   }
+  // keep any other helpers you had (e.g., distanceTo, clone)
 }
+
+// Semantic alias: use Point when the value semantically represents a position.
+export const Point = Vector; // simple alias for clarity in code; adopt in usage
+
+/**
+ *
+ * @param {Vector} D - Incident ray
+ * @param {Vector} N - Surface normal at that point
+ * @returns {Vector} - Reflected ray around the normal
+ */
+export function reflect(D, N) {
+  // r = D - 2*(D·N)*N
+  // const dDotN = D.dot(N);
+  // return D.subtract(N.scale(2 * dDotN));
+  return N.scale(2 * N.dot(D)).subtract(D);
+}
+
 /**
  * Defines a sphere in 3D space
  */
@@ -109,9 +142,9 @@ export function IntersectRaySphere(O, D, sphere) {
   // By Solving the both the ray equation and the sphere equation, we get this quadratic formula
   // t^2 (D . D) + 2t (CO . D) + (CO . CO) - r^2 = 0 which we solve in this function
 
-  const a = D.dotProduct(D);
-  const b = 2 * CO.dotProduct(D);
-  const c = CO.dotProduct(CO) - r * r;
+  const a = D.dot(D);
+  const b = 2 * CO.dot(D);
+  const c = CO.dot(CO) - r * r;
 
   const discriminant = b * b - 4 * a * c;
 
@@ -122,14 +155,4 @@ export function IntersectRaySphere(O, D, sphere) {
   const root2 = (-b - sqrtDisc) / (2 * a);
 
   return [root1, root2];
-}
-
-/**
- *
- * @param {Vector} D - Incident ray
- * @param {Vector} N - Surface normal at that point
- * @returns {Vector} - Reflected ray around the normal
- */
-export function reflectRay(D, N) {
-  return N.scale(2 * N.dotProduct(D)).subtract(D);
 }

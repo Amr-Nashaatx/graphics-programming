@@ -21,7 +21,7 @@ const obj1 = new Sphere(new Vector(0, -1, 3), 1, new Color(255, 0, 0))
 const obj2 = new Sphere(
   new Vector(2, 0, 4),
   1,
-  new Color(0, 0, 255)
+  new Color(0, 0, 20)
 ).addReflectiveness(0.3);
 
 //green
@@ -38,4 +38,3 @@ scene.addObject(obj3);
 scene.addObject(obj4);
 
 scene.render();
-1;

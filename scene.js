@@ -1,7 +1,7 @@
 import { Canvas, Color } from "./canvas.js";
 import { BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants.js";
 import { DirectionalLight, Light, PointLight } from "./light.js";
-import { IntersectRaySphere, Vector, reflectRay } from "./math.js";
+import { IntersectRaySphere, Vector, reflect } from "./math.js";
 
 /**
  * Represents a 3D scene containing objects, lights, and a camera.
@@ -50,19 +50,42 @@ export class Scene {
    */
 
   render() {
+    // STEP 0 — Define the (currently fixed) camera basis.
+    // Right now, your camera is at origin looking +Z with world-up +Y.
+    // This is an identity orthonormal basis, but we write it explicitly:
+    const forward = new Vector(0, 0, 1); // camera looks along +Z
+    const right = new Vector(1, 0, 0); // camera right = +X
+    const up = new Vector(0, 1, 0); // camera up = +Y
+
     for (let x = -CANVAS_WIDTH / 2; x < CANVAS_WIDTH / 2; x++) {
       for (let y = -CANVAS_HEIGHT / 2; y < CANVAS_HEIGHT / 2; y++) {
+        // Pixel in canvas-space
         const currentPixel = new Vector(x, y, 0);
-        const D = this.canvas.canvasToViewPort(currentPixel); // Ray direction vector
-        const color = this.traceRay(this.O, D); // Trace from camera position (this.O) in the D direction
+
+        // STEP 1 — convert canvas coordinate to viewport coordinate
+        // (This gives a local camera-space vector: Vp = (vx, vy, vz))
+        const Vp = this.canvas.canvasToViewPort(currentPixel);
+
+        // STEP 2 — construct ray direction using the camera basis
+        // D = vx*right + vy*up + vz*forward
+        let D = right
+          .scale(Vp.x)
+          .add(up.scale(Vp.y))
+          .add(forward.scale(Vp.z))
+          .normalize();
+
+        // STEP 3 — trace the ray
+        const color = this.traceRay(this.O, D);
         this.canvas.putPixel(
           this.canvas.convertToScreenCoordinates(currentPixel),
           color
         );
       }
     }
+
     this.canvas.updateCanvas();
   }
+
   /**
    *  Trace a ray from camera through viewport and returns the color of the first object hit. lighting calculations is included as well.
    * @param {Vector} D - Ray direction vector
@@ -102,7 +125,7 @@ export class Scene {
     //  in traceRay() we have D , the direction of the incoming ray towards P, we want the reflected ray pointing out of the surface.
     // so we first flip the direction of D (-D) which means the ray outgoing from P then we reflect it with respect to N
 
-    const R = reflectRay(D.scale(-1), N);
+    const R = reflect(D.scale(-1), N).normalize();
     const reflectedColor = this.traceRay(
       P,
       R,
@@ -155,10 +178,10 @@ export class Scene {
       } else {
         let tMax = 0;
         if (light.constructor === PointLight) {
-          L = light.position.subtract(P); // ray direction
+          L = light.position.subtract(P).normalize(); // ray direction
           tMax = 1;
         } else if (light.constructor === DirectionalLight) {
-          L = light.direction;
+          L = light.direction.normalize();
           tMax = Infinity;
         }
         // shadow check ---> Send ray from the point P in the direction of light L.
@@ -173,14 +196,14 @@ export class Scene {
           continue;
         }
         // diffuse
-        const nDotL = N.dotProduct(L);
+        const nDotL = N.dot(L);
         if (nDotL > 0) {
           i += light.intensity * (nDotL / (N.magnitude() * L.magnitude()));
         }
         // specular
         if (!(s === -1)) {
-          const R = reflectRay(L, N); // reflected ray
-          const RdotV = R.dotProduct(V);
+          const R = reflect(L, N).normalize(); // reflected ray
+          const RdotV = R.dot(V);
           if (RdotV > 0) {
             i +=
               light.intensity *
