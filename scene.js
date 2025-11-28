@@ -1,16 +1,13 @@
-import { Canvas, Color } from "./canvas.js";
+import { Canvas } from "./canvas.js";
 import { BACKGROUND_COLOR, CANVAS_HEIGHT, CANVAS_WIDTH } from "./constants.js";
 import { DirectionalLight, Light, PointLight } from "./light.js";
-import { IntersectRaySphere, Vector, reflect } from "./math.js";
-
+import { IntersectRaySphere, Vector, reflect, Color, Point } from "./math.js";
+import { Camera } from "./camera.js";
 /**
  * Represents a 3D scene containing objects, lights, and a camera.
  */
 export class Scene {
-  /**
-   *  @param {Vector} O - Camera position in the scene
-   */
-  constructor(O) {
+  constructor() {
     /**
      *   @type {object[]}
      */
@@ -27,7 +24,7 @@ export class Scene {
     /**
      * @type {Vector}
      */
-    this.O = O;
+    this.camera = new Camera();
   }
 
   /**
@@ -75,7 +72,7 @@ export class Scene {
           .normalize();
 
         // STEP 3 — trace the ray
-        const color = this.traceRay(this.O, D);
+        const color = this.traceRay(this.camera.position, D);
         this.canvas.putPixel(
           this.canvas.convertToScreenCoordinates(currentPixel),
           color
@@ -88,6 +85,7 @@ export class Scene {
 
   /**
    *  Trace a ray from camera through viewport and returns the color of the first object hit. lighting calculations is included as well.
+   * @param {Point} S - Starting point of the ray
    * @param {Vector} D - Ray direction vector
    * @param {number} tMin - minimum point in the ray after which we start capturing colors the ray passes through
    * @param {number} tMax - Maximum point in the ray after which we stop capturing any intersections
@@ -102,8 +100,10 @@ export class Scene {
     );
 
     if (!closestSphere) return BACKGROUND_COLOR;
-    const P = S.add(D.scale(closestT)); //compute the point on the sphere
-    let N = P.subtract(closestSphere.center).normalize(); // compute the normal
+    const P = S.addVector(D.scale(closestT)); //compute the point on the sphere
+    let N = P.getDisplacementVectorTo(closestSphere.center)
+      .scale(-1)
+      .normalize(); // compute the normal
 
     // V  is a vector that points from the object to the camera(the viewer).
     // but D (ray vector) points from the camera to the object

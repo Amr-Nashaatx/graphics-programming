@@ -1,5 +1,3 @@
-import { fixZero } from "./utils.js";
-
 /**
  * Represents a color using RGB components.
  */

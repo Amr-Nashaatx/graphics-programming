@@ -1,10 +1,9 @@
 import { O } from "./constants.js";
 import { Scene } from "./scene.js";
-import { Vector, Sphere } from "./math.js";
-import { Color } from "./canvas.js";
+import { Vector, Sphere, Color } from "./math.js";
 import { DirectionalLight, Light, PointLight } from "./light.js";
 
-const scene = new Scene(O);
+const scene = new Scene();
 
 //Add Lights
 scene.addLight(new Light(0.2));
