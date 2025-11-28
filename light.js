@@ -1,4 +1,4 @@
-import { Vector } from "./math.js";
+import { Point, Vector } from "./math.js";
 
 /**
  * Base class that represents a light intensity or ambient light
@@ -23,12 +23,12 @@ export class Light {
 export class PointLight extends Light {
   /**
    * @param {number} [intensity=0] - The instensity of the light.
-   * @param {Vector} - the point light position
+   * @param {Point} - the point light position
    */
   constructor(intensity, position) {
     super(intensity);
     /**
-     *  @param {Vector}
+     *  @type {Point}
      */
     this.position = position;
   }
@@ -44,6 +44,9 @@ export class DirectionalLight extends Light {
    */
   constructor(intensity, direction) {
     super(intensity);
+    /**
+     *  @type {Vector}
+     */
     this.direction = direction;
   }
 }

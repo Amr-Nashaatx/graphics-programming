@@ -1,5 +1,4 @@
-import { Color } from "./canvas.js";
-import { Vector } from "./math.js";
+import { Vector, Color } from "./math.js";
 const canvas = document.getElementById("canvas");
 
 export const VIEWPORT_HEIGHT = 1;
