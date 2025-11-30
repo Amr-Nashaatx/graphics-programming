@@ -3,7 +3,9 @@ import {
   VIEWPORT_HEIGHT,
   VIEWPORT_WIDTH,
 } from "./constants.js";
-import { Vector, Color } from "./math.js";
+
+import { Vector } from "./math/vector.js";
+import { Color } from "./math/color.js";
 
 export class Canvas {
   constructor() {

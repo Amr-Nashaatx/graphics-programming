@@ -1,4 +1,6 @@
-import { Matrix4, Point, Vector } from "./math.js";
+import { Matrix4 } from "./math/matrix4.js";
+import { Point } from "./math/point.js";
+import { Vector } from "./math/vector.js";
 /**
  *
  * @param {Point} eye
@@ -28,7 +30,7 @@ export class Camera {
    * @param {Vector} up - the up direction of the camera
    */
   lookAt(target, up = new Vector(0, 1, 0)) {
-    this.forward = target.subtract(this.position).normalize();
+    this.forward = this.position.getDisplacementVectorTo(target).normalize();
     this.right = up.cross(this.forward).normalize();
     this.up = this.forward.cross(this.right).normalize();
   }
@@ -38,19 +40,17 @@ export class Camera {
     const sinYaw = Math.sin(this.yaw);
     const cosPitch = Math.cos(this.pitch);
     const sinPitch = Math.sin(this.pitch);
-    const cosRoll = Math.cos(this.roll);
-    const sinRoll = Math.sin(this.roll);
 
-    this.forward = new Vector(cosYaw * cosPitch, sinPitch, sinYaw * cosPitch)
-      .normalize()
-      .scale(-1);
-
-    this.right = new Vector(
-      cosYaw * cosRoll + sinYaw * sinPitch * sinRoll,
-      cosPitch * sinRoll,
-      sinYaw * cosRoll - cosYaw * sinPitch * sinRoll
+    this.forward = new Vector(
+      cosYaw * cosPitch,
+      sinPitch,
+      sinYaw * cosPitch
     ).normalize();
 
+    // Right = forward × worldUp
+    this.right = this.forward.cross(up).normalize();
+
+    // Up = right × forward
     this.up = this.right.cross(this.forward).normalize();
   }
 
@@ -65,7 +65,7 @@ export class Camera {
 
   createInverseViewMatrix() {
     const O = this.position;
-    const r = this.forward;
+    const r = this.right;
     const u = this.up;
     const f = this.forward;
     return new Matrix4([
@@ -97,8 +97,9 @@ export class Camera {
    * @returns
    */
   createViewMatrix() {
+    // NOTE: ADD f column to -f
     const O = this.position;
-    const r = this.forward;
+    const r = this.right;
     const u = this.up;
     const f = this.forward;
     return new Matrix4([
