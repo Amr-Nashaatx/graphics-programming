@@ -3,9 +3,101 @@
   <head>
     <meta charset="UTF-8" />
     <title>Graphics from Scratch</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      canvas {
+        margin-bottom: 20px;
+        border: 1px solid #333;
+      }
+      .controls-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        width: 100%;
+        max-width: 800px;
+      }
+      .control-group {
+        text-align: center;
+      }
+      .d-pad {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        max-width: 150px;
+        margin: 0 auto;
+      }
+      .d-pad button {
+        padding: 10px;
+        margin: 0;
+      }
+    </style>
   </head>
   <body>
     <canvas id="canvas" width="800" height="800"></canvas>
+
+    <div class="controls-container">
+      <!-- Rotation Controls -->
+      <div class="control-group">
+        <h3>Rotation (Look)</h3>
+        <div class="d-pad">
+          <div></div>
+          <button id="look-up" data-tooltip="Look Up">
+            <i class="fa-solid fa-arrow-up"></i>
+          </button>
+          <div></div>
+
+          <button id="look-left" data-tooltip="Look Left">
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <button disabled><i class="fa-solid fa-eye"></i></button>
+          <button id="look-right" data-tooltip="Look Right">
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+
+          <div></div>
+          <button id="look-down" data-tooltip="Look Down">
+            <i class="fa-solid fa-arrow-down"></i>
+          </button>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- Movement Controls -->
+      <div class="control-group">
+        <h3>Movement</h3>
+        <div class="d-pad">
+          <button id="move-up" data-tooltip="Move Up">
+            <i class="fa-solid fa-chevron-up"></i>
+          </button>
+          <button id="move-forward" data-tooltip="Move Forward">W</button>
+          <button id="move-down" data-tooltip="Move Down">
+            <i class="fa-solid fa-chevron-down"></i>
+          </button>
+
+          <button id="move-left" data-tooltip="Move Left">A</button>
+          <button disabled><i class="fa-solid fa-person-walking"></i></button>
+          <button id="move-right" data-tooltip="Move Right">D</button>
+
+          <div></div>
+          <button id="move-back" data-tooltip="Move Back">S</button>
+          <div></div>
+        </div>
+      </div>
+    </div>
+
     <script type="module" src="main.js"></script>
   </body>
 </html>

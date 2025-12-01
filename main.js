@@ -9,6 +9,8 @@ import {
   PointLightSource,
 } from "./light/lightSource.js";
 
+import { initInput } from "./input.js";
+
 const scene = new Scene();
 
 //Add Lights
@@ -43,3 +45,5 @@ scene.addObject(obj3);
 scene.addObject(obj4);
 
 scene.render();
+
+initInput(scene);

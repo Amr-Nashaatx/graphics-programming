@@ -58,31 +58,6 @@ export class Matrix4 {
     }
     return new Matrix4(r);
   }
-  /**
-   * Embeds a 3x3 rotation matrix into a 4x4 matrix.
-   * @param {Matrix3} matrix3 - The 3x3 rotation matrix to embed.
-   * @return {Matrix4}
-   */
-  embedRotation(matrix3) {
-    return new Matrix4([
-      matrix3.m[0],
-      matrix3.m[1],
-      matrix3.m[2],
-      0,
-      matrix3.m[3],
-      matrix3.m[4],
-      matrix3.m[5],
-      0,
-      matrix3.m[6],
-      matrix3.m[7],
-      matrix3.m[8],
-      0,
-      0,
-      0,
-      0,
-      1,
-    ]);
-  }
 
   multiplyVector(v) {
     const m = this.m;
@@ -127,5 +102,30 @@ export class Matrix4 {
 
   static identity() {
     return new Matrix4([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
+  }
+  /**
+   * Embeds a 3x3 rotation matrix into a 4x4 matrix.
+   * @param {Matrix3} matrix3 - The 3x3 rotation matrix to embed.
+   * @return {Matrix4}
+   */
+  static embedRotation(matrix3) {
+    return new Matrix4([
+      matrix3.m[0],
+      matrix3.m[1],
+      matrix3.m[2],
+      0,
+      matrix3.m[3],
+      matrix3.m[4],
+      matrix3.m[5],
+      0,
+      matrix3.m[6],
+      matrix3.m[7],
+      matrix3.m[8],
+      0,
+      0,
+      0,
+      0,
+      1,
+    ]);
   }
 }

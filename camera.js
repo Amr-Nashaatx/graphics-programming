@@ -1,93 +1,134 @@
 import { Matrix4 } from "./math/matrix4.js";
 import { Point } from "./math/point.js";
 import { Vector } from "./math/vector.js";
-/**
- *
- * @param {Point} eye
- * @param {Point} target
- * @param {Vector} worldUp
- * @returns {object{Vector, vector, vector}}
- */
+import { Matrix3 } from "./math/matrix3.js";
 
 export class Camera {
-  constructor(position = new Point(0, 0, 0)) {
-    this.position = position;
-
-    this.orientationMatrix = Matrix4.identity();
-
-    // For smooth movement/rotation
-    this.yaw = 0; // left-right rotation
-    this.pitch = 0; // up-down rotation
-    this.roll = 0; // tilt
+  constructor() {
+    this.cameraWorld = Matrix4.identity();
+  }
+  getRotationMatrix() {
+    return this.cameraWorld.extractRotation();
+  }
+  getTranslationVector() {
+    return this.cameraWorld.extractPosition();
   }
 
   /**
-   *
-   * @param {Point} target - target point to look at.
-   * @param {Vector} up - the up direction of the camera
+   * @description LOCAL rotation: rotate about axis expressed in CAMERA space
+   * @param {Vector} axis - the axis to rotate about in camera space
+   * @param {number} angle - the angle to rotate by in radians
    */
-  lookAt(target, up = new Vector(0, 1, 0)) {
-    const forward = this.position.getDisplacementVectorTo(target).normalize(); // Vector from camera to target
-    const right = up.cross(forward).normalize(); // Right vector is perpendicular to world up and forward
-    const cameraUp = forward.cross(right).normalize(); // Camera's actual up vector
+  rotateLocal(axis, angle) {
+    const rotationMatrix3 = Matrix3.createRotationMatrixFromRodrigues(
+      axis.normalize(),
+      angle
+    );
+    const rotationMatrix4 = Matrix4.embedRotation(rotationMatrix3);
+    this.cameraWorld = this.cameraWorld.multiply(rotationMatrix4);
+  }
 
-    this.forward = forward;
-    this.right = right;
-    this.up = cameraUp;
+  /**
+   * @description World rotation: rotate about axis expressed in WORLD space
+   * @param {Vector} axis - the axis to rotate about in world space
+   * @param {number} angle - the angle to rotate by in radians
+   */
+  rotateWorld(axis, angle) {
+    const rotationMatrix3 = Matrix3.createRotationMatrixFromRodrigues(
+      axis.normalize(),
+      angle
+    );
+    const rotationMatrix4 = Matrix4.embedRotation(rotationMatrix3);
+    this.cameraWorld = rotationMatrix4.multiply(this.cameraWorld);
+  }
 
-    // Construct the orientation matrix (camera's world transformation)
-    // The columns of the matrix are the right, up, and forward vectors, and the position.
-    // This matrix transforms from camera space to world space.
-    this.orientationMatrix = new Matrix4([
+  /**
+   * @description LOCAL translation: move in camera space
+   * @param {number} r - the distance to move in the right direction
+   * @param {number} u - the distance to move in the up direction
+   * @param {number} f - the distance to move in the forward direction
+   */
+  moveLocal(r, u, f) {
+    const T = Matrix4.createTranslationMatrix4(r, u, f);
+    this.cameraWorld = this.cameraWorld.multiply(T); //left-multiply
+  }
+
+  /**
+   * @description GLOBAL translation: move in world space
+   * @param {number} dx - the distance to move in the x direction
+   * @param {number} dy - the distance to move in the y direction
+   * @param {number} dz - the distance to move in the z direction
+   */
+  moveWorld(dx, dy, dz) {
+    const T = Matrix4.createTranslationMatrix4(dx, dy, dz);
+    this.cameraWorld = T.multiply(this.cameraWorld); //right-multiply
+  }
+
+  /**
+   * @description Set the camera to look at a target point
+   * @param {Point} eye - the eye point
+   * @param {Point} target - the target point
+   * @param {Vector} worldUp - the world up vector
+   */
+  lookAt(eye, target, worldUp = new Vector(0, 1, 0)) {
+    const forward = eye.getDisplacementVectorTo(target).normalize();
+    const right = worldUp.cross(forward).normalize();
+    const up = forward.cross(right).normalize();
+
+    const rotationMatrix3 = new Matrix3([
       right.x,
-      cameraUp.x,
-      forward.x,
-      this.position.x,
       right.y,
-      cameraUp.y,
-      forward.y,
-      this.position.y,
       right.z,
-      cameraUp.z,
+      up.x,
+      up.y,
+      up.z,
+      forward.x,
+      forward.y,
       forward.z,
-      this.position.z,
-      0,
-      0,
-      0,
-      1,
     ]);
+    const rotationMatrix4 = Matrix4.embedRotation(rotationMatrix3);
+    const translationMatrix = Matrix4.createTranslationMatrix4(
+      eye.x,
+      eye.y,
+      eye.z
+    );
+    this.cameraWorld = translationMatrix.multiply(rotationMatrix4);
   }
 
+  // View =
+  // [ Rᵀ   -Rᵀ*pos ]
+  // [ 0        1   ]
   /**
-   *
-   * @param {Vector} O
-   * @param {Vector} right
-   * @param {Vector} up
-   * @param {Vector} forward
-   * @returns
+   * @description Get the view matrix
+   * @returns {Matrix4}
    */
-  createViewMatrix() {
-    // NOTE: ADD f column to -f
-    const O = this.position;
-    const r = this.right;
-    const u = this.up;
-    const f = this.forward;
+  getViewMatrix() {
+    const rotationMatrix = this.cameraWorld.extractRotation();
+    const translationVector = this.cameraWorld.extractPosition();
+
+    const inverseRotationMatrix = rotationMatrix.transpose();
+
+    // negate translation vector and transform it to camera space
+    const inverseTranslationVector = inverseRotationMatrix.multiplyVector(
+      translationVector.scale(-1)
+    );
+
     return new Matrix4([
-      r.x,
-      u.x,
-      f.x,
+      inverseRotationMatrix.m[0],
+      inverseRotationMatrix.m[1],
+      inverseRotationMatrix.m[2],
       0,
-      r.y,
-      u.y,
-      f.y,
+      inverseRotationMatrix.m[3],
+      inverseRotationMatrix.m[4],
+      inverseRotationMatrix.m[5],
       0,
-      r.z,
-      u.z,
-      f.z,
+      inverseRotationMatrix.m[6],
+      inverseRotationMatrix.m[7],
+      inverseRotationMatrix.m[8],
       0,
-      -r.dot(O),
-      -u.dot(O),
-      -f.dot(O),
+      inverseTranslationVector.x,
+      inverseTranslationVector.y,
+      inverseTranslationVector.z,
       1,
     ]);
   }

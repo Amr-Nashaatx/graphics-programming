@@ -24,7 +24,7 @@ export class Scene {
     this.canvas = new Canvas();
 
     /**
-     * @type {Vector}
+     * @type {Camera}
      */
     this.camera = new Camera();
     /**
@@ -61,18 +61,18 @@ export class Scene {
         // (This gives a local camera-space vector: Vp = (vx, vy, vz))
         const Vp = this.canvas.canvasToViewPort(currentPixel);
 
-        if (x === 0 && y === 0) {
-          let u = new Vector(0, 1, 0);
-          let r = new Vector(1, 0, 0).rotateVectorAroundAxis(u, Math.PI / 2);
-          console.log(r);
-        }
+        // transform ray direction from camera -> world space
+        const D = this.camera.cameraWorld.multiplyVector(Vp).normalize();
 
-        // construct ray direction using the camera basis
-        // D = vx*right + vy*up + vz*forward
-        const D = this.camera.orientationMatrix.multiplyVector(Vp);
-
+        // Get camera position from which we shoot rays
+        const translation = this.camera.getTranslationVector();
+        const cameraPosition = new Point(
+          translation.x,
+          translation.y,
+          translation.z
+        );
         // trace the ray
-        const color = this.raytracer.traceRay(this.camera.position, D);
+        const color = this.raytracer.traceRay(cameraPosition, D);
         this.canvas.putPixel(
           this.canvas.convertToScreenCoordinates(currentPixel),
           color
