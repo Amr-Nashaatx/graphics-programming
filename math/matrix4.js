@@ -1,5 +1,6 @@
 import { Vector } from "./vector.js";
 import { Point } from "./point.js";
+import { Matrix3 } from "./matrix3.js";
 
 export class Matrix4 {
   constructor(values) {
@@ -29,6 +30,13 @@ export class Matrix4 {
     return new Matrix4([c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
   }
 
+  add(other) {
+    const r = new Array(16);
+    for (let i = 0; i < 16; i++) {
+      r[i] = this.m[i] + other.m[i];
+    }
+    return new Matrix4(r);
+  }
   multiply(other) {
     const a = this.m;
     const b = other.m;
@@ -42,6 +50,38 @@ export class Matrix4 {
       }
     }
     return new Matrix4(r);
+  }
+  multiplyByScalar(s) {
+    const r = new Array(16);
+    for (let i = 0; i < 16; i++) {
+      r[i] = this.m[i] * s;
+    }
+    return new Matrix4(r);
+  }
+  /**
+   * Embeds a 3x3 rotation matrix into a 4x4 matrix.
+   * @param {Matrix3} matrix3 - The 3x3 rotation matrix to embed.
+   * @return {Matrix4}
+   */
+  embedRotation(matrix3) {
+    return new Matrix4([
+      matrix3.m[0],
+      matrix3.m[1],
+      matrix3.m[2],
+      0,
+      matrix3.m[3],
+      matrix3.m[4],
+      matrix3.m[5],
+      0,
+      matrix3.m[6],
+      matrix3.m[7],
+      matrix3.m[8],
+      0,
+      0,
+      0,
+      0,
+      1,
+    ]);
   }
 
   multiplyVector(v) {
@@ -64,6 +104,25 @@ export class Matrix4 {
     const resPoint = new Point(x, y, z);
     resPoint.w = 1;
     return resPoint;
+  }
+
+  transpose() {
+    const m = this.m;
+    const r = new Array(16);
+    for (let col = 0; col < 4; col++) {
+      for (let row = 0; row < 4; row++) {
+        r[col * 4 + row] = m[row * 4 + col];
+      }
+    }
+    return new Matrix4(r);
+  }
+  extractRotation() {
+    const m = this.m;
+    return new Matrix3([m[0], m[1], m[2], m[4], m[5], m[6], m[8], m[9], m[10]]);
+  }
+  extractPosition() {
+    const m = this.m;
+    return new Vector(m[12], m[13], m[14]);
   }
 
   static identity() {

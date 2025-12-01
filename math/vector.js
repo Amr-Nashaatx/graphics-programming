@@ -102,5 +102,27 @@ export class Vector {
     const m = this.magnitude();
     return m === 0 ? new Vector(0, 0, 0) : this.scale(1 / m);
   }
-  // keep any other helpers you had (e.g., distanceTo, clone)
+  /**
+   * Rotates the vector around an axis using the Rodrigues' rotation formula.
+   * @param {Vector} u - The axis to rotate around.
+   * @param {number} theta - The angle to rotate by.
+   * @return {Vector}
+   */
+  rotateVectorAroundAxis(u, theta) {
+    const axis = u.normalize();
+
+    const cos = Math.cos(theta);
+    const sin = Math.sin(theta);
+
+    // term1 = v cosθ
+    const term1 = this.scale(cos);
+
+    // term2 = (u × v) sinθ
+    const term2 = axis.cross(this).scale(sin);
+
+    // term3 = u (u · v) (1 - cosθ)
+    const term3 = axis.scale(axis.dot(this) * (1 - cos));
+
+    return term1.add(term2).add(term3);
+  }
 }
