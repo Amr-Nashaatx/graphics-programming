@@ -13,18 +13,7 @@ export class Sphere {
    * @param {number} [radius=1] - Radius of the sphere
    * @param {Color}  - Diffuse color of the sphere
    */
-  constructor(center, radius, color) {
-    /**
-     * @type {Point}
-     */
-    this.center = center;
-    /**
-     * @type {number}
-     */
-    this.radius = radius;
-    /**
-     * @type {Color}
-     */
+  constructor(color) {
     this.color = color;
     /**
      * @type {number}
@@ -36,17 +25,17 @@ export class Sphere {
     this.reflective = 0;
 
     //local transform properties
-    this.position = center;
+    this.position = new Vector(1, 0.5, 1);
+    this.scale = new Vector(0.1, 0.1, 0.1);
     this.rotation = new Vector(0, 0, 0);
-    this.scale = new Vector(radius, radius, radius);
 
     // matrices
     this.modelMatrix = Matrix4.identity();
     this.invModelMatrix = Matrix4.identity();
 
-    this.updateMatrix(); // compute initial matrices
+    this.updateModel(); // compute initial matrices
   }
-  updateMatrix() {
+  updateModel() {
     const T = Matrix4.createTranslationMatrix4(
       this.position.x,
       this.position.y,
@@ -57,23 +46,37 @@ export class Sphere {
     const RY = Matrix4.createRotationYMatrix(this.rotation.y);
     const RZ = Matrix4.createRotationZMatrix(this.rotation.z);
 
+    const R = RZ.multiply(RY).multiply(RX); // rotation matrix
+
     const S = Matrix4.createScaleMatrix4(
-      this.scale.x,
-      this.scale.y,
-      this.scale.z
+      this.scale.x || 1,
+      this.scale.y || 1,
+      this.scale.z || 1
     );
 
     // Model matrix = T * R * S
-    this.modelMatrix = T.multiply(RZ).multiply(RY).multiply(RX).multiply(S);
+    this.modelMatrix = T.multiply(R).multiply(S);
 
-    // Store inverse (will add inverseMatrix4 soon)
-    // this.invModelMatrix = inverseMatrix4(this.modelMatrix);
+    const Tinv = Matrix4.createTranslationMatrix4(
+      -this.position.x,
+      -this.position.y,
+      -this.position.z
+    );
+    const Rinv = R.transpose();
+    const Sinv = Matrix4.createScaleMatrix4(
+      1 / this.scale.x,
+      1 / this.scale.y,
+      1 / this.scale.z
+    );
+
+    // Inverse Model Matrix = S⁻¹ · R⁻¹ · T⁻¹
+    this.invModelMatrix = Sinv.multiply(Rinv).multiply(Tinv);
   }
   setPosition(x, y, z) {
     this.position.x = x;
     this.position.y = y;
     this.position.z = z;
-    this.updateMatrix();
+    this.updateModel();
     return this;
   }
 
@@ -81,7 +84,7 @@ export class Sphere {
     this.rotation.x = rx;
     this.rotation.y = ry;
     this.rotation.z = rz;
-    this.updateMatrix();
+    this.updateModel();
     return this;
   }
 
@@ -89,7 +92,7 @@ export class Sphere {
     this.scale.x = sx;
     this.scale.y = sy;
     this.scale.z = sz;
-    this.updateMatrix();
+    this.updateModel();
     return this;
   }
   /**

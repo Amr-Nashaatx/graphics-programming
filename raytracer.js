@@ -2,6 +2,7 @@ import { closestIntersection, reflect } from "./math/functions.js";
 import { BACKGROUND_COLOR } from "./constants.js";
 import { LightSource } from "./light/lightSource.js";
 import { LightingComputer } from "./light/lightComputer.js";
+import { Vector } from "./math/vector.js";
 /**
  * Raytracer class that traces a ray from camera through viewport and returns the color of the first object hit. lighting calculations is included as well.
  *
@@ -26,7 +27,7 @@ export class Raytracer {
    * @returns {Color}
    */
   traceRay(S, D, tMin = 1, tMax = Infinity, recursionDepth = 3) {
-    const [closestSphere, closestT] = closestIntersection(
+    const { closestSphere, closestT, Dobj, Oobj } = closestIntersection(
       S,
       D,
       tMin,
@@ -35,10 +36,15 @@ export class Raytracer {
     );
 
     if (!closestSphere) return BACKGROUND_COLOR;
-    const P = S.addVector(D.scale(closestT)); //compute the point on the sphere
-    let N = P.getDisplacementVectorTo(closestSphere.center)
-      .scale(-1)
-      .normalize(); // compute the normal
+    // Transform ray origin and direction to world space
+
+    const Pobj = Oobj.addVector(Dobj.scale(closestT)); // hitpoint in object space
+
+    const P = closestSphere.modelMatrix.multiplyPoint(Pobj); //hitpoint in world space
+    let Nobj = new Vector(Pobj.x, Pobj.y, Pobj.z).normalize(); // normal in object space
+
+    // Compute normal in world space Nworld​=normalize((M−1)T⋅Nobj​)
+    const N = closestSphere.invModelMatrix.transpose().multiplyVector(Nobj);
 
     // V  is a vector that points from the object to the camera(the viewer).
     // but D (ray vector) points from the camera to the object

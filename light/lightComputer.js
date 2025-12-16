@@ -1,4 +1,7 @@
 import { closestIntersection, reflect } from "../math/functions.js";
+import { Point } from "../math/point.js";
+import { Vector } from "../math/vector.js";
+import { DirectionalLightSource } from "./lightSource.js";
 
 export class LightingComputer {
   /**
@@ -11,7 +14,7 @@ export class LightingComputer {
   }
   /**
    *
-   * @param {Vector} P - Point to compute the light at
+   * @param {Point} P - Point to compute the light at
    * @param {Vector} N - Normal of surface at that point
    * @param {Vector} V - Viewer vector
    * @param {Vector} s - Specular exponent
@@ -25,24 +28,24 @@ export class LightingComputer {
         i += light.intensity;
         continue;
       }
-      if (this.isInShadow(P, L, light)) {
+      if (this.isInShadow(P, L, light.getShadowMaxDistance(P))) {
         continue;
       }
-      i += this.computeDiffuse(light, P, N, L);
+      i += this.computeDiffuse(light, N, L);
       if (!(s === -1)) {
         i += this.computeSpecular(light, N, L, V, s);
       }
     }
     return i;
   }
-  isInShadow(P, L, light) {
+  isInShadow(P, L, maxDistance) {
     // shadow check ---> Send ray from the point P in the direction of light L.
     //  if the it hits an object it means this point is in shadow of that object hence we ignore lighting computation for that point
-    const [shadowObject] = closestIntersection(
+    const { closestSphere: shadowObject } = closestIntersection(
       P,
       L,
       0.001,
-      light.scanDistanceForShadow,
+      maxDistance,
       this.objects
     );
     if (shadowObject) {
@@ -50,7 +53,7 @@ export class LightingComputer {
     }
     return false;
   }
-  computeDiffuse(light, P, N, L) {
+  computeDiffuse(light, N, L) {
     const nDotL = N.dot(L);
     if (nDotL > 0) {
       return light.intensity * (nDotL / (N.magnitude() * L.magnitude()));

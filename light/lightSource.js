@@ -20,6 +20,9 @@ export class LightSource {
   getLightDirectionFromPoint(point) {
     return null;
   }
+  getShadowMaxDistance(point) {
+    return null;
+  }
 }
 
 /**
@@ -41,6 +44,9 @@ export class PointLightSource extends LightSource {
   getLightDirectionFromPoint(point) {
     return this.position.getDisplacementVectorTo(point).scale(-1).normalize();
   }
+  getShadowMaxDistance(point) {
+    return this.getLightDirectionFromPoint(point).magnitude();
+  }
 }
 
 /**
@@ -61,5 +67,8 @@ export class DirectionalLightSource extends LightSource {
   }
   getLightDirectionFromPoint(point) {
     return this.direction;
+  }
+  getShadowMaxDistance(point) {
+    return Infinity;
   }
 }
